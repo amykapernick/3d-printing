@@ -1,0 +1,15 @@
+{
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"strict": true,
+		// Mirror the package.json `imports` ("#lib/*") for TypeScript. Vite resolves
+		// #lib via the imports map, but TS won't extension-infer an imports-pattern
+		// target, so a paths mapping (which does) keeps the two in sync.
+		"paths": {
+			"#lib": ["./src/lib/index.ts"],
+			"#lib/*": ["./src/lib/*"]
+		}
+	},
+	"include": ["src", "vite.config.ts"],
+	"exclude": ["src/service-worker.ts"]
+}

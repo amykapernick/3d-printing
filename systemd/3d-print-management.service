@@ -1,0 +1,24 @@
+[Unit]
+# Auto-start the whole 3D-print-management bundle on boot.
+# Installed to /etc/systemd/system/ by `make pi-service` (placeholders filled in).
+Description=3D Print Management (Bambu) stack
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+# Best-effort image refresh (e.g. spoolman:latest); the `-` means boot never
+# fails just because the Pi is offline.
+ExecStartPre=-/usr/bin/docker compose pull --quiet
+ExecStart=/usr/bin/docker compose up
+ExecStop=/usr/bin/docker compose down
+Restart=always
+RestartSec=10
+# Pulling images on a cold boot can take a while — don't time out the start.
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

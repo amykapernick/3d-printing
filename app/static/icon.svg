@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="3D Print Manager">
+	<rect width="512" height="512" fill="#14171d" />
+	<!-- filament spool, kept within the maskable safe area -->
+	<g transform="translate(256 256)">
+		<circle r="150" fill="none" stroke="#f78d2b" stroke-width="40" />
+		<circle r="48" fill="#f78d2b" />
+		<circle r="20" fill="#14171d" />
+	</g>
+</svg>

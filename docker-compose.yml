@@ -1,0 +1,65 @@
+# One command for the whole bundle:  docker-compose up --build
+#
+#   spoolman    filament/spool stock + cost       http://localhost:7912
+#   pocketbase  app data + committed migrations    http://localhost:8090/_/
+#   app         the SvelteKit PWA                   http://localhost:3000
+#
+# Copy .env.example to .env first to set the admin password and (later) HA creds.
+services:
+  spoolman:
+    image: ghcr.io/donkie/spoolman:latest
+    restart: unless-stopped
+    # Named volume (not a host bind mount): Spoolman runs as uid 1000 and needs to
+    # own its data dir, which a root-owned bind mount prevents. The named volume
+    # inherits the image's uid-1000 ownership, so it works with no manual chown.
+    volumes:
+      - spoolman_data:/home/app/.local/share/spoolman
+    ports:
+      - '${SPOOLMAN_PORT:-7912}:8000'
+    environment:
+      - TZ=${TZ:-Australia/Perth}
+
+  pocketbase:
+    build: ./pocketbase
+    # Named image so a pre-built (e.g. cross-compiled for a Pi) image is reused
+    # by `docker compose up` without a local rebuild. See `make pi-deploy`.
+    image: 3dpm-pocketbase
+    restart: unless-stopped
+    volumes:
+      - ./pb_data:/pb/pb_data
+      - ./pb_migrations:/pb/pb_migrations
+      - ./pb_hooks:/pb/pb_hooks
+    ports:
+      - '${POCKETBASE_PORT:-8090}:8090'
+    environment:
+      - POCKETBASE_ADMIN_EMAIL=${POCKETBASE_ADMIN_EMAIL:-admin@example.com}
+      - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD:-changeme-please}
+      # for the hourly Etsy sync cron hook (no-op unless set)
+      - APP_INTERNAL_URL=${APP_INTERNAL_URL:-http://app:3000}
+      - CRON_SECRET=${CRON_SECRET:-}
+
+  app:
+    build: ./app
+    image: 3dpm-app
+    restart: unless-stopped
+    depends_on:
+      - pocketbase
+      - spoolman
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    environment:
+      # allow .3mf uploads (adapter-node default body limit is 512KB)
+      - BODY_SIZE_LIMIT=${BODY_SIZE_LIMIT:-104857600}
+      - POCKETBASE_URL=http://pocketbase:8090
+      - SPOOLMAN_URL=http://spoolman:8000
+      - POCKETBASE_ADMIN_EMAIL=${POCKETBASE_ADMIN_EMAIL:-admin@example.com}
+      - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD:-changeme-please}
+      - HA_URL=${HA_URL:-}
+      - HA_TOKEN=${HA_TOKEN:-}
+      - ETSY_KEYSTRING=${ETSY_KEYSTRING:-}
+      - ETSY_SHOP_ID=${ETSY_SHOP_ID:-}
+      - ETSY_REDIRECT_URI=${ETSY_REDIRECT_URI:-}
+      - CRON_SECRET=${CRON_SECRET:-}
+
+volumes:
+  spoolman_data:

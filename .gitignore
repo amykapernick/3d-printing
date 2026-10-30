@@ -1,0 +1,18 @@
+# secrets & local config
+.env
+# personal deploy target (PI / PI_KEY / PI_DIR overrides for the Makefile)
+deploy.mk
+
+# runtime data (not committed — schema lives in pb_migrations/)
+pb_data/
+data/
+
+# node
+node_modules/
+
+# cross-built image tarballs for Pi deploys (make pi-images)
+dist/
+
+# invoices / personal docs (contain PII) — never commit
+*.pdf
+*:Zone.Identifier
